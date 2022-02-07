@@ -1,0 +1,31 @@
+---
+# tasks file for main
+
+- name: Install common-package on server 
+  apt:
+    pkg:
+    - zsh
+    - fail2ban
+    - vim
+    - git      
+  become: yes
+  become_method: sudo 
+
+- name: Change shell from bash to zsh
+  shell: sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+  become: yes
+  become_method: sudo 
+  ignore_errors: yes
+
+- name: change shell
+  shell: chsh -s /usr/bin/zsh
+  become: yes
+  become_method: sudo
+
+
+
+
+
+
+
+

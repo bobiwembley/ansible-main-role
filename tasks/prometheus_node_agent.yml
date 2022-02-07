@@ -1,0 +1,79 @@
+---
+
+- name: add Prometheus user 
+  user:
+    name: prometheus
+    state: present
+    shell: /sbin/nologin
+  become: yes
+  become_method: sudo
+
+- name: Create prometheus folder
+  file:
+    path: /etc/prometheus
+    owner: prometheus
+    group: prometheus
+    mode: '0644'
+    state:  directory
+  become: yes
+  become_method: sudo 
+
+- name: Get the package from Prometheus
+  get_url: 
+    url: https://github.com/prometheus/prometheus/releases/download/v2.31.0/prometheus-2.31.0.linux-amd64.tar.gz
+    dest: /tmp/prometheus-2.31.0.linux-amd64.tar.gz
+
+- name: untar prometheus Package
+  unarchive:
+    src: /tmp/prometheus-2.31.0.linux-amd64.tar.gz
+    dest: /tmp/
+    remote_src: yes
+ 
+- name: move prometheus bin 
+  command: mv /tmp/prometheus-2.31.0.linux-amd64/prometheus /usr/local/bin
+  become: yes
+  become_method: sudo 
+
+- name: move promtool bin
+  command: mv /tmp/prometheus-2.31.0.linux-amd64/promtool /usr/local/bin
+  become: yes
+  become_method: sudo
+
+
+- name: mv console cfg
+  command: mv  /tmp/prometheus-2.31.0.linux-amd64/consoles /etc/prometheus/
+  become: yes
+  become_method: sudo 
+  ignore_errors: yes
+
+- name: mv console_libraries  
+  command: mv  /tmp/prometheus-2.31.0.linux-amd64/console_libraries /etc/prometheus/
+  become: yes
+  become_method: sudo
+  ignore_errors: yes
+
+- name: mv prometheus.yml
+  command: mv  /tmp/prometheus-2.31.0.linux-amd64/prometheus.yml /etc/prometheus/
+  become: yes
+  become_method: sudo
+  ignore_errors: yes
+
+
+- name: configure prometheus service
+  template: 
+    src: prometheus.service
+    dest: /etc/systemd/system/
+    mode: '0644'
+  become: yes
+  become_method: sudo
+
+
+- name: Start service prometheus
+  service:
+    name: prometheus
+    state: started
+
+- name: Enable service prometheus
+  service:
+    name: prometheus
+    enabled: yes

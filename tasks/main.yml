@@ -1,0 +1,13 @@
+---
+# tasks file for main
+
+- include_tasks: common_pkg.yml 
+- include_tasks: prometheus_node_agent.yml
+
+
+
+
+
+
+
+
