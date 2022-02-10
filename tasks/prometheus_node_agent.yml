@@ -5,68 +5,79 @@
     name: prometheus
     state: present
     shell: /sbin/nologin
-  become: yes
-  become_method: sudo
 
 - name: Create prometheus folder
   file:
-    path: /etc/prometheus
+    path: '{{ conf_prom_folder }}'
     owner: prometheus
     group: prometheus
     mode: '0644'
     state:  directory
-  become: yes
-  become_method: sudo 
+
+
+- name: Create prometheus folder
+  file:
+    path: '{{ var_prom_folder }}'
+    owner: prometheus
+    group: prometheus
+    mode: '0644'
+    state:  directory
+
 
 - name: Get the package from Prometheus
   get_url: 
-    url: https://github.com/prometheus/prometheus/releases/download/v2.31.0/prometheus-2.31.0.linux-amd64.tar.gz
-    dest: /tmp/prometheus-2.31.0.linux-amd64.tar.gz
+    url: '{{ prom_url }}'
+    dest: /tmp/'{{ prom_name }}'.tar.gz
 
 - name: untar prometheus Package
   unarchive:
-    src: /tmp/prometheus-2.31.0.linux-amd64.tar.gz
+    src: /tmp/'{{ prom_name }}'.tar.gz
     dest: /tmp/
     remote_src: yes
+    list_files: yes
+  register: archive_contents
  
 - name: move prometheus bin 
-  command: mv /tmp/prometheus-2.31.0.linux-amd64/prometheus /usr/local/bin
-  become: yes
-  become_method: sudo 
+  command: mv /tmp/prometheus-'{{ prom_version }}'.'{{ prom_arch }}'/prometheus '{{ bin_prom_folder }}'
 
 - name: move promtool bin
-  command: mv /tmp/prometheus-2.31.0.linux-amd64/promtool /usr/local/bin
-  become: yes
-  become_method: sudo
-
+  command: mv /tmp/prometheus-'{{ prom_version }}'.'{{ prom_arch }}'/promtool '{{ bin_prom_folder }}'
 
 - name: mv console cfg
-  command: mv  /tmp/prometheus-2.31.0.linux-amd64/consoles /etc/prometheus/
+  command: mv  /tmp/prometheus-'{{ prom_version }}'.'{{ prom_arch }}'/consoles  '{{ conf_prom_folder }}'
   become: yes
   become_method: sudo 
   ignore_errors: yes
 
 - name: mv console_libraries  
-  command: mv  /tmp/prometheus-2.31.0.linux-amd64/console_libraries /etc/prometheus/
+  command: mv  /tmp/prometheus-'{{ prom_version }}'.'{{ prom_arch }}'/console_libraries '{{ conf_prom_folder }}'
   become: yes
-  become_method: sudo
-  ignore_errors: yes
+
 
 - name: mv prometheus.yml
-  command: mv  /tmp/prometheus-2.31.0.linux-amd64/prometheus.yml /etc/prometheus/
-  become: yes
-  become_method: sudo
-  ignore_errors: yes
+  command: mv  /tmp/prometheus-'{{ prom_version }}'.'{{ prom_arch }}'/prometheus.yml '{{ conf_prom_folder }}'
 
+- name: prometheus owner of conf folder 
+  file:
+    path:  '{{ conf_prom_folder }}'
+    state: directory
+    recurse: yes
+    owner: prometheus
+    group: prometheus
+
+- name: prometheus owner of var folder 
+  file:
+    path:  '{{ var_prom_folder }}'
+    state: directory
+    recurse: yes
+    owner: prometheus
+    group: prometheus
 
 - name: configure prometheus service
   template: 
-    src: prometheus.service
-    dest: /etc/systemd/system/
+    src: prometheus.service.j2
+    dest: /etc/systemd/system/prometheus.service
     mode: '0644'
-  become: yes
-  become_method: sudo
-
 
 - name: Start service prometheus
   service:
@@ -77,3 +88,10 @@
   service:
     name: prometheus
     enabled: yes
+
+- name: clean package after installation
+  file:
+    name: '{{ item }}'
+    state: absent
+  with_items:
+    - /tmp/prometheus-'{{ prom_version }}'.'{{ prom_arch }}'.tar.gz

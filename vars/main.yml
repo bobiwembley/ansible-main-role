@@ -1,2 +1,17 @@
 ---
 # vars file for main
+
+###Var for Prometeheus installation
+conf_prom_folder: '/etc/prometheus'
+bin_prom_folder: '/usr/local/bin'
+var_prom_folder: '/var/lib/prometheus'
+
+prom_version: '2.31.0'
+prom_arch: 'linux-amd64'
+prom_url: 'https://github.com/prometheus/prometheus/releases/download/v{{ prom_version }}/prometheus-{{ prom_version }}.{{ prom_arch }}.tar.gz'
+
+
+prom_name: prometheus
+
+ ###
+ 
